@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import graphviz
 
 parser = argparse.ArgumentParser()
 parser.add_argument("input_file")
@@ -76,13 +77,37 @@ def read_graph( filename ):
             nodes += line_nodes
 
     nodes = sorted(list(set(nodes)))
-    print(f"{nodes=}")
+    return nodes, edges
 
+def print_graph( nodes, edges=None ):
+
+    if( edges is None ):
+        return print_graph( nodes[0], nodes[1] )
+
+    print(f"{nodes=}")
     for edge in edges:
         print(edge, end="\n\n")
 
+def draw_graph( nodes, edges=None ):
+
+    fontsize = "9"
+
+    if( edges is None ):
+        return draw_graph( nodes[0], nodes[1] )
+
+    graph = graphviz.Digraph(format="svg")
+    for node in nodes:
+        graph.node( node )
+
+    for edge in edges:
+        graph.edge( edge.source_node, edge.destination_node, _attributes={"label":edge.__operation_repr__()} )
+
+    graph.render(view=True)#, filename="graph.svg")
+
 if __name__ == "__main__":
 
-    graph = read_graph( arguments.input_file )
+    nodes, edges = read_graph( arguments.input_file )
+    graph = (nodes, edges)
 
-
+    print_graph(graph)
+    draw_graph(graph)
