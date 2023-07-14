@@ -49,6 +49,38 @@ class Edge:
         representation += self.__operation_repr__()
         return representation
 
+class TripleThread:
+
+    def __init__(self, source_node, register, thread):
+
+        self.source_node = source_node
+        self.register = register
+        self.thread = thread
+
+    def __repr__(self):
+        representation = f"<{self.source_node}, {self.register}, {self.thread}>"
+        return representation
+
+    def __hash__(self):
+        return hash( self.source_node + self.register + self.thread )
+        return hash( self.__repr__() )
+
+class TripleRegister:
+
+    def __init__(self, source_node, bad_register, potentially_bad_register):
+
+        self.source_node = source_node
+        self.bad_register = bad_register
+        self.potentially_bad_register = potentially_bad_register
+
+    def __repr__(self):
+        representation = f"<{self.source_node}, {self.bad_register}, {self.potentially_bad_register}>"
+        return representation
+
+    def __hash__(self):
+        return hash( self.source_node + self.bad_register + self.potentially_bad_register )
+        return hash( self.__repr__() )
+
 def read_graph( filename ):
 
     print(f"Reading graph from file {filename}")
@@ -104,10 +136,45 @@ def draw_graph( nodes, edges=None ):
 
     graph.render(view=True)#, filename="graph.svg")
 
+def verify_ra( nodes, edges=None ):
+    
+    if( edges is None ):
+        return verify_ra( nodes[0], nodes[1] )
+
+
+    print("lalalala")
+
+    output_edges = [edge for edge in edges if edge.operation == "output"]
+    for output_edge in output_edges:
+
+        alpha = set()
+        beta  = set()
+        print("lalalala")
+
+        alpha.add( TripleThread(output_edge.source_node, output_edge.register, output_edge.thread) )
+
+        # ellie needs to figure out how long this for loop should go for. she does not know yet
+        for i in range( len(edges) ):
+            
+            ## rule 1  #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in output_edges:
+                        if( isinstance(triple, TripleThread ) and edge.thread == triple.thread and edge.destination_node == node):
+                            alpha.add( TripleRegister(edge.source_node, triple.register, edge.register) )
+        
+                            print(f"{alpha}")
+
+            ##################################################
+
 if __name__ == "__main__":
 
     nodes, edges = read_graph( arguments.input_file )
     graph = (nodes, edges)
 
-    print_graph(graph)
+    #print_graph(graph)
     draw_graph(graph)
+    verify_ra(graph)
