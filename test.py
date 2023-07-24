@@ -12,17 +12,12 @@ class TripleThread:
         representation = f"<{self.source_node}, {self.register}, {self.thread}>"
         return representation
 
-    def __eq__(self, other):
-        result = True
-
-        result = result and self.source_node == other.source_node
-        result = result and self.register == other.register
-        result = result and self.thread == other.thread
-
-        return result
-
     def __hash__(self):
+        print(hash( self.__repr__() ))
         return hash( self.__repr__() )
+
+    def __eq__(self, other):
+        return self.__hash__() == other.__hash__()
 
 class TripleRegister:
 
@@ -37,8 +32,11 @@ class TripleRegister:
         return representation
 
     def __hash__(self):
-        return hash( self.source_node + self.bad_register + self.potentially_bad_register )
+        print(hash( self.__repr__() ))
         return hash( self.__repr__() )
+
+    def __eq__(self, other):
+        return self.__hash__() == other.__hash__()
 
 triple_1 = TripleThread("lalala", "hahaha", "penis")
 triple_2 = TripleThread("lalala", "hahaha", "penis")
