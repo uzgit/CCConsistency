@@ -177,17 +177,16 @@ def verify_ra( nodes, edges=None ):
     if( edges is None ):
         return verify_ra( nodes[0], nodes[1] )
 
-
-    print("lalalala")
-
     output_edges = [edge for edge in edges if edge.operation == "output"]
     for output_edge in output_edges:
 
+        print(f"processing {output_edge}")
         alpha = set()
         beta  = set()
-        print("lalalala")
 
-        alpha.add( TripleThread(output_edge.source_node, output_edge.register, output_edge.thread) )
+        default_triple = TripleThread(output_edge.source_node, output_edge.register, output_edge.thread)
+        print(f"default: {default_triple}")
+        alpha.add( default_triple )
 
         # ellie needs to figure out how long this for loop should go for. she does not know yet
         for i in range( len(edges) ):
@@ -202,7 +201,7 @@ def verify_ra( nodes, edges=None ):
                         if( isinstance(triple, TripleThread ) and edge.thread == triple.thread and edge.destination_node == node):
                             alpha.add( TripleRegister(edge.source_node, triple.register, edge.register) )
         
-                            print(f"{alpha}")
+        print(f"{alpha}")
 
             ##################################################
 
@@ -212,5 +211,5 @@ if __name__ == "__main__":
     graph = (nodes, edges)
 
     #print_graph(graph)
-    #draw_graph(graph)
+    draw_graph(graph)
     verify_ra(graph)
