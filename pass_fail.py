@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("input_file")
 arguments = parser.parse_args()
 
+#I suspect issue at dedfinition of class edge. It fucks up when source and destination nodes are the same somehow #
 class Edge:
 
     def __init__(self, source_node, destination_node, operation, parameter_1, parameter_2, parameter_3=None, parameter_4=None):
@@ -178,6 +179,7 @@ def verify_ra( nodes, edges=None ):
         return verify_ra( nodes[0], nodes[1] )
 
     output_edges = [edge for edge in edges if edge.operation == "output"]
+    copy_edges = [edge for edge in edges if edge.operation == "copy"]
     for output_edge in output_edges:
 
         print(f"processing {output_edge}")
@@ -188,8 +190,8 @@ def verify_ra( nodes, edges=None ):
         print(f"default: {default_triple}")
         alpha.add( default_triple )
 
-        # ellie needs to figure out how long this for loop should go for. she does not know yet
-        for i in range( len(edges) ):
+        # must check loop execution time, but should be okay for now
+        for i in range( len(edges)):
             
             ## rule 1  #######################################
             for node in nodes:
@@ -200,8 +202,134 @@ def verify_ra( nodes, edges=None ):
                     for edge in output_edges:
                         if( isinstance(triple, TripleThread ) and edge.thread == triple.thread and edge.destination_node == node):
                             alpha.add( TripleRegister(edge.source_node, triple.register, edge.register) )
-        
-        print(f"{alpha}")
+           
+            ## rule 2 potentially depends on the initalization output edge - This is problem for parosh not josh #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in output_edges:
+                        if( isinstance(triple, TripleThread ) and edge.thread == triple.thread and edge.destination_node == node and output_edge.variable == edge.variable):
+                            beta.add( TripleRegister(edge.source_node, triple.register, edge.register) )
+                            
+            ## rule 3  #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in output_edges:
+                        if( isinstance(triple, TripleThread ) and edge.thread == triple.thread and edge.destination_node == node):
+                            alpha.add( TripleThread(edge.source_node, triple.register, edge.thread) )
+                            
+            ## rule 4  #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in output_edges:
+                        if( isinstance(triple, TripleRegister ) and edge.destination_node == node):
+                            alpha.add( TripleRegister(edge.source_node, triple.bad_register, triple.potentially_bad_register) ) 
+                            
+            ## rule 5  #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in copy_edges:
+                        if( isinstance(triple, TripleRegister ) and edge.destination_node == node and triple.potentially_bad_register== edge.source_register):
+                            alpha.add( TripleRegister(edge.source_node, triple.bad_register, edge.destination_register) )        
+
+            ## rule 6 SOMETHING WIERD HERE what is the difference with rule 5? - This is problem for parosh not josh  #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in copy_edges:
+                        if( isinstance(triple, TripleRegister ) and edge.destination_node == node and triple.potentially_bad_register== edge.source_register):
+                            alpha.add( TripleRegister(edge.source_node, triple.bad_register, edge.destination_register) ) 
+                            
+
+            ## rule 7  #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in copy_edges:
+                        if( isinstance(triple, TripleThread ) and edge.destination_node == node and triple.register== edge.destination_register):
+                            alpha.add( TripleThread(edge.source_node, edge.source_register, triple.thread) ) 
+
+            ## rule 8  #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in copy_edges:
+                        if( isinstance(triple, TripleRegister ) and edge.destination_node == node and triple.bad_register== edge.destination_register):
+                            alpha.add( TripleRegister(edge.source_node, edge.source_register, triple.potentially_bad_register) )
+
+            ## rule 9  #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in output_edges:
+                        if( isinstance(triple, TripleRegister ) and edge.destination_node == node and triple.potentially_bad_register== edge.register):
+                            beta.add( TripleRegister(edge.source_node, triple.bad_register, edge.thread) )
+                            
+            ## rule 10  #######################################
+            for node in nodes:
+
+                triples = [triple for triple in beta if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in output_edges:
+                        if( isinstance(triple, TripleThread ) and edge.destination_node == node and triple.thread== edge.thread):
+                            beta.add( TripleRegister(edge.source_node, triple.register, edge.register) )
+
+            ## rule 11  there is a problem here, how can triple have variable in third slot? - This is problem for parosh not josh #######################################
+            for node in nodes:
+
+                triples = [triple for triple in alpha if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in output_edges:
+                        if( isinstance(triple, TripleThread ) and edge.destination_node == node ):
+                            beta.add( TripleThread(edge.source_node, triple.register, edge.thread) )
+
+            ## rule 12  potentially depends on the initailization output edge - This is problem for parosh not josh #######################################
+            for node in nodes:
+
+                triples = [triple for triple in beta if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in output_edges:
+                        
+                        if( isinstance(triple, TripleThread ) and edge.destination_node == node and triple.thread == edge.thread):
+                            beta.add( TripleThread(edge.source_node, triple.register, edge.thread) )
+
+
+            ## rule 13 FAIL (keyword fail here is not because of bug, but because indeed if we pass this if statement we should flag a fail) - the bug is probably at the definition of edge ###################
+            for node in nodes:
+                triples = [triple for triple in beta if triple.source_node == node]
+                for triple in triples:
+
+                    for edge in output_edges:
+                        ###print(f"node is {node}, edge is {edge}, triple is {triple}")
+                        if( isinstance(triple, TripleThread) and edge.destination_node == node and triple.thread == edge.thread and output_edge.variable == edge.variable):
+                          print(f"Failed because of {triple} combined with edge {edge}, while on node {node}")
+                                  
+                
+                
+        print(f"alpha contains: {alpha}")
+        print(f"beta contains: {beta}")
 
             ##################################################
 
