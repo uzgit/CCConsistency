@@ -190,7 +190,7 @@ def verify_ra( nodes, edges=None ):
         print(f"default: {default_triple}")
         alpha.add( default_triple )
 
-        # must check loop execution time, but should be okay for now
+        # must check loop execution time, but should be okay for now. This is the loop that forces the sets alpha and beta to grow untill they reach a fixpoint. could also be a while loop
         for i in range( len(edges)):
             
             ## rule 1  #######################################
@@ -203,7 +203,7 @@ def verify_ra( nodes, edges=None ):
                         if( isinstance(triple, TripleThread ) and edge.thread == triple.thread and edge.destination_node == node):
                             alpha.add( TripleRegister(edge.source_node, triple.register, edge.register) )
            
-            ## rule 2 potentially depends on the initalization output edge - This is problem for parosh not josh #######################################
+            ## rule 2 potentially depends on the initalization output edge - This is problem for parosh #######################################
             for node in nodes:
 
                 triples = [triple for triple in alpha if triple.source_node == node]
@@ -243,7 +243,7 @@ def verify_ra( nodes, edges=None ):
                         if( isinstance(triple, TripleRegister ) and edge.destination_node == node and triple.potentially_bad_register== edge.source_register):
                             alpha.add( TripleRegister(edge.source_node, triple.bad_register, edge.destination_register) )        
 
-            ## rule 6 SOMETHING WIERD HERE what is the difference with rule 5? - This is problem for parosh not josh  #######################################
+            ## rule 6 SOMETHING WIERD HERE what is the difference with rule 5? - This is problem for parosh  #######################################
             for node in nodes:
 
                 triples = [triple for triple in alpha if triple.source_node == node]
@@ -282,7 +282,7 @@ def verify_ra( nodes, edges=None ):
 
                     for edge in output_edges:
                         if( isinstance(triple, TripleRegister ) and edge.destination_node == node and triple.potentially_bad_register== edge.register):
-                            beta.add( TripleRegister(edge.source_node, triple.bad_register, edge.thread) )
+                            beta.add( TripleThread(edge.source_node, triple.bad_register, edge.thread) )
                             
             ## rule 10  #######################################
             for node in nodes:
@@ -294,7 +294,7 @@ def verify_ra( nodes, edges=None ):
                         if( isinstance(triple, TripleThread ) and edge.destination_node == node and triple.thread== edge.thread):
                             beta.add( TripleRegister(edge.source_node, triple.register, edge.register) )
 
-            ## rule 11  there is a problem here, how can triple have variable in third slot? - This is problem for parosh not josh #######################################
+            ## rule 11  there is a problem here, how can triple have variable in third slot? - This is problem for parosh  #######################################
             for node in nodes:
 
                 triples = [triple for triple in alpha if triple.source_node == node]
@@ -304,7 +304,7 @@ def verify_ra( nodes, edges=None ):
                         if( isinstance(triple, TripleThread ) and edge.destination_node == node ):
                             beta.add( TripleThread(edge.source_node, triple.register, edge.thread) )
 
-            ## rule 12  potentially depends on the initailization output edge - This is problem for parosh not josh #######################################
+            ## rule 12  potentially depends on the initailization output edge - This is problem for parosh #######################################
             for node in nodes:
 
                 triples = [triple for triple in beta if triple.source_node == node]
